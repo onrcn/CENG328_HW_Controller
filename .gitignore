@@ -1,0 +1,11 @@
+*.txt
+*.zip
+*.csv
+*.xls
+*.html
+venv/
+submissions/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

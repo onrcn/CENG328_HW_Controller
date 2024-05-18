@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Create a python virtual environment or activate it if it already exists
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+fi
+
+source venv/bin/activate
+
+# Install the required packages
+pip install -r requirements.txt
+
+# Make the "unarchive" script executable if it is not already
+chmod +x unarchive
+
+# Run the "unarchive" script, taking the first argument as the path to the archive
+./unarchive $1
+
+# Run the python script
+python3 first_control.py
+
+#
+
+
+
+
+
