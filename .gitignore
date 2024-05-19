@@ -5,7 +5,12 @@
 *.html
 venv/
 submissions/
+archives/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+data/*.csv
+data/*.html
+data/*.xlsx
+

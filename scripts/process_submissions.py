@@ -3,7 +3,6 @@ import csv
 import shutil
 import subprocess
 import magic
-from convert_to_html import convert_to_html
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, '..', 'data')
@@ -228,7 +227,6 @@ def update_csv_with_errors(base_dir=SUBMISSIONS_DIR, csv_file=os.path.join(DATA_
 def first_control(check_input_txt=True):
     csv_create()
     update_csv_with_errors(check_input_txt=check_input_txt)
-    convert_to_html()
     print("First control finished.")
 
 

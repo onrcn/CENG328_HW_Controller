@@ -6,6 +6,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, '..', 'data')
 STATIC_DIR = os.path.join(BASE_DIR, '..', 'static')
 
+print()
+print()
+print()
+print(f"BASE_DIR: {BASE_DIR}")
+print(f"DATA_DIR: {DATA_DIR}")
+print(f"STATIC_DIR: {STATIC_DIR}")
+print()
+print()
+print()
+
 
 def sort_csv(input_file=os.path.join(DATA_DIR, 'students_submissions.csv')):
     df = pd.read_csv(input_file, encoding='utf-8-sig')
@@ -57,4 +67,3 @@ def convert_to_excel(input_file=os.path.join(DATA_DIR, 'students_submissions.csv
 if __name__ == '__main__':
     convert_to_html()
     convert_to_excel()
-
