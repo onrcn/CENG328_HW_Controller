@@ -58,7 +58,8 @@ fi
 
 # Run the process_submissions script
 echo "Processing submissions..."
-PYTHONPATH="$PROJECT_ROOT/scripts" python3 "$PROJECT_ROOT/scripts/process_submissions.py"
+python3 "$PROJECT_ROOT/scripts/process_submissions.py"
+python3 "$PROJECT_ROOT/scripts/create_more_data.py"
 
 
 # Deactivate virtual environment if used

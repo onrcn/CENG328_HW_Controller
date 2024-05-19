@@ -6,16 +6,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, '..', 'data')
 STATIC_DIR = os.path.join(BASE_DIR, '..', 'static')
 
-print()
-print()
-print()
-print(f"BASE_DIR: {BASE_DIR}")
-print(f"DATA_DIR: {DATA_DIR}")
-print(f"STATIC_DIR: {STATIC_DIR}")
-print()
-print()
-print()
-
 
 def sort_csv(input_file=os.path.join(DATA_DIR, 'students_submissions.csv')):
     df = pd.read_csv(input_file, encoding='utf-8-sig')
@@ -45,11 +35,25 @@ def convert_to_html(input_file=os.path.join(DATA_DIR, 'students_submissions.csv'
     html_table = df.to_html(
         index=False, classes='table table-striped', border=0, escape=False)
 
-    with open(os.path.join(STATIC_DIR, 'index.html'), 'r', encoding='utf-8') as file:
-        html_template = file.read()
-
-    html_string = html_template.replace(
-        '<div id="table-container"></div>', f'<div id="table-container">{html_table}</div>')
+    # Create the HTML string with references to the external CSS and JS files
+    html_string = f'''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Student Submissions</title>
+        <link rel="stylesheet" href="../static/style.css">
+    </head>
+    <body>
+        <h2>Student Submissions</h2>
+        <div id="table-container">{html_table}</div>
+        <button id="saveButton" class="save-button">Save Changes</button>
+        <button id="addQuestionButton" class="add-question-button">Add Question</button>
+        <script src="../static/script.js"></script>
+    </body>
+    </html>
+    '''
 
     # Write the HTML string to the output file
     with open(output_file, 'w', encoding='utf-8') as f:
