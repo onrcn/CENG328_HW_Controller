@@ -1,9 +1,11 @@
 import pandas as pd
 
+
 def sort_csv(input_file='students_submissions.csv'):
     df = pd.read_csv(input_file, encoding='utf-8-sig')
     df_sorted = df.sort_values(by='Student Name')
     return df_sorted
+
 
 def convert_to_html(input_file='students_submissions.csv', output_file='sorted_submissions.html'):
     df = sort_csv(input_file)
@@ -15,11 +17,14 @@ def convert_to_html(input_file='students_submissions.csv', output_file='sorted_s
     df['Compiled'] = df['Compiled'].astype(str)
 
     # Add internal borders for the "Compiled" column
-    df['Compiled'] = df['Compiled'].str.replace('True', '<span style="border: 1px solid green; padding: 2px;">True</span>', regex=False)
-    df['Compiled'] = df['Compiled'].str.replace('False', '<span style="border: 1px solid red; padding: 2px;">False</span>', regex=False)
+    df['Compiled'] = df['Compiled'].str.replace(
+        'True', '<span style="border: 1px solid green; padding: 2px;">True</span>', regex=False)
+    df['Compiled'] = df['Compiled'].str.replace(
+        'False', '<span style="border: 1px solid red; padding: 2px;">False</span>', regex=False)
 
     # Convert the DataFrame to an HTML table with added CSS
-    html_table = df.to_html(index=False, classes='table table-striped', border=0, escape=False)
+    html_table = df.to_html(
+        index=False, classes='table table-striped', border=0, escape=False)
 
     # Define HTML structure with inline CSS
     html_string = f'''
@@ -72,6 +77,13 @@ def convert_to_html(input_file='students_submissions.csv', output_file='sorted_s
 
     print(f'HTML table saved to {output_file}')
 
+
+def convert_to_excel(input_file='students_submissions.csv', output_file='sorted_submissions.xlsx'):
+    df = sort_csv(input_file)
+    df.to_excel(output_file, index=False)
+    print(f'Excel file saved to {output_file}')
+
+
 if __name__ == '__main__':
     convert_to_html()
-
+    convert_to_excel()

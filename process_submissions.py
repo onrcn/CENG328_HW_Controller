@@ -3,7 +3,9 @@ import csv
 import shutil
 import subprocess
 import magic
+import pandas as pd
 from convert_to_html import convert_to_html
+
 
 def csv_create(base_dir="submissions/", csv_file="students_submissions.csv"):
     students_info = []
@@ -26,6 +28,7 @@ def csv_create(base_dir="submissions/", csv_file="students_submissions.csv"):
 
     print(f"CSV file '{csv_file}' created successfully.")
 
+
 def determine_file_type(file_path):
     try:
         mime = magic.Magic(mime=True)
@@ -35,26 +38,49 @@ def determine_file_type(file_path):
         print(f"Error determining file type: {e}")
         return ""
 
+
 def extract_archive(file_path, destination_dir):
     file_type = determine_file_type(file_path)
     try:
+        extracted = False
         if file_type == "application/zip" or file_path.endswith('.zip'):
             shutil.unpack_archive(file_path, destination_dir)
+            extracted = True
         elif "rar" in file_type or file_path.endswith('.rar'):
             os.makedirs(destination_dir, exist_ok=True)
-            subprocess.run(['unrar', 'x', '-o+', '-y', file_path, destination_dir], check=True)
-        elif file_type in ['application/x-tar', 'application/gzip', 'application/x-xz', 'application/x-bzip2'] or file_path.endswith(('.tar.gz', '.tgz', '.tar.xz', '.txz', '.tar.bz2', '.tbz2', '.tar')):
-            shutil.unpack_archive(file_path, destination_dir)
-        else:
+            subprocess.run(['unrar', 'x', '-o+', '-y',
+                           file_path, destination_dir], check=True)
+            extracted = True
+
+        if not extracted:
+            if file_path.endswith('.rar'):
+                # Try unzipping if the extension is .rar but it might be a zip file
+                new_file_path = file_path.replace('.rar', '.zip')
+                os.rename(file_path, new_file_path)
+                shutil.unpack_archive(new_file_path, destination_dir)
+                extracted = True
+            elif file_path.endswith('.zip'):
+                # Try unzipping if the extension is .zip but it might be a rar file
+                new_file_path = file_path.replace('.zip', '.rar')
+                os.rename(file_path, new_file_path)
+                os.makedirs(destination_dir, exist_ok=True)
+                subprocess.run(['unrar', 'x', '-o+', '-y',
+                               new_file_path, destination_dir], check=True)
+                extracted = True
+
+        if not extracted:
             raise ValueError(f"Unsupported archive type for file {file_path}")
     except Exception as e:
         print(f"Error extracting {file_path}: {e}")
         raise
 
+
 def is_source_code(file_path):
     file_type = determine_file_type(file_path)
-    file_types = ["text/x-c", "text/x-c++src", "text/x-csrc", "text/x-c++hdr", "text/x-chdr", "text/x-csrc"]
+    file_types = ["text/x-c", "text/x-c++src", "text/x-csrc",
+                  "text/x-c++hdr", "text/x-chdr", "text/x-csrc"]
     return file_type in file_types
+
 
 def clean_up_folder(folder_path):
     deleted_files_log = []
@@ -73,30 +99,42 @@ def clean_up_folder(folder_path):
     return deleted_files_log, changed_files_log
 
 
+def find_all_source_files(student_folder):
+    source_files = []
+    for root, dirs, files in os.walk(student_folder):
+        for file in files:
+            file_path = os.path.join(root, file)
+            if is_source_code(file_path):
+                source_files.append(file_path)
+    return source_files
+
+
 def compile_check(source_files, student_folder):
     compile_results = {}
     compile_logs = {}
-    for file in source_files:
-        file_path = os.path.join(student_folder, file)
+    for file_path in source_files:
         if os.path.isfile(file_path):  # Ensure it's a file
             compile_command = f"gcc \"{file_path}\" -o \"{file_path}.out\""
             try:
-                result = subprocess.run(compile_command, shell=True, capture_output=True, text=True)
+                result = subprocess.run(
+                    compile_command, shell=True, capture_output=True, text=True)
                 if result.returncode == 0:
-                    compile_results[file] = True
-                    compile_logs[file] = "Compiled successfully."
+                    compile_results[file_path] = True
+                    compile_logs[file_path] = "Compiled successfully."
                 else:
-                    compile_results[file] = False
-                    compile_logs[file] = result.stderr
+                    compile_results[file_path] = False
+                    compile_logs[file_path] = result.stderr
             except Exception as e:
-                compile_results[file] = False
-                compile_logs[file] = str(e)
+                compile_results[file_path] = False
+                compile_logs[file_path] = str(e)
     return compile_results, compile_logs
+
 
 def ensure_input_txt(student_folder, root_input_txt):
     student_input_txt = os.path.join(student_folder, "input.txt")
     if not os.path.exists(student_input_txt):
         shutil.copy(root_input_txt, student_input_txt)
+
 
 def log_folder_structure(folder_path):
     folder_structure = []
@@ -109,6 +147,7 @@ def log_folder_structure(folder_path):
             folder_structure.append(f"{subindent}{file}")
     return "\n".join(folder_structure)
 
+
 def update_csv_with_errors(base_dir="submissions/", csv_file="students_submissions.csv"):
     with open(csv_file, mode='r', newline='', encoding='utf-8-sig') as file:
         reader = csv.reader(file)
@@ -117,10 +156,12 @@ def update_csv_with_errors(base_dir="submissions/", csv_file="students_submissio
     root_input_txt = "input.txt"
 
     for row in rows[1:]:
-        student_folder = os.path.join(base_dir, f"{row[0]}_{row[1]}_assignsubmission_file_")
+        student_folder = os.path.join(
+            base_dir, f"{row[0]}_{row[1]}_assignsubmission_file_")
         if os.path.isdir(student_folder):
             try:
-                archive_files = [f for f in os.listdir(student_folder) if f.endswith(('.zip', '.rar', '.tar.gz'))]
+                archive_files = [f for f in os.listdir(
+                    student_folder) if f.endswith(('.zip', '.rar', '.tar.gz'))]
                 for archive_file in archive_files:
                     archive_path = os.path.join(student_folder, archive_file)
                     try:
@@ -133,15 +174,19 @@ def update_csv_with_errors(base_dir="submissions/", csv_file="students_submissio
                 row[2] = initial_structure
 
                 ensure_input_txt(student_folder, root_input_txt)
-                deleted_files_log, changed_files_log = clean_up_folder(student_folder)
+                deleted_files_log, changed_files_log = clean_up_folder(
+                    student_folder)
                 row[7] = ", ".join(deleted_files_log)
                 row[6] = ", ".join(changed_files_log)
 
-                source_files = [f for f in os.listdir(student_folder) if is_source_code(os.path.join(student_folder, f))]
+                source_files = find_all_source_files(student_folder)
                 if source_files:
-                    compile_results, compile_logs = compile_check(source_files, student_folder)
-                    row[3] = ", ".join([f"{k}: {v}" for k, v in compile_results.items()])
-                    row[4] = "\n".join([f"{k}: {v}" for k, v in compile_logs.items()])
+                    compile_results, compile_logs = compile_check(
+                        source_files, student_folder)
+                    row[3] = ", ".join(
+                        [f"{k}: {v}" for k, v in compile_results.items()])
+                    row[4] = "\n".join(
+                        [f"{k}: {v}" for k, v in compile_logs.items()])
                 else:
                     row[3] = "No source files found"
                     row[4] = "N/A"
@@ -153,11 +198,14 @@ def update_csv_with_errors(base_dir="submissions/", csv_file="students_submissio
         writer = csv.writer(file)
         writer.writerows(rows)
 
+
 def first_control():
     csv_create()
     update_csv_with_errors()
     convert_to_html()
     print("First control finished.")
 
+
 if __name__ == "__main__":
     first_control()
+
