@@ -1,0 +1,59 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4ecd8;
+    margin: 0;
+    padding: 20px;
+    color: #5b4636;
+}
+
+h2 {
+    text-align: center;
+    color: #5b4636;
+}
+
+#table-container {
+    width: 100%;
+    overflow: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 18px;
+    text-align: left;
+}
+
+.table th, .table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd5c3;
+}
+
+.table th {
+    background-color: #b5a17e;
+    color: #ffffff;
+}
+
+.table tr:nth-child(even) {
+    background-color: #e3d9c0;
+}
+
+.table tr:hover {
+    background-color: #d1bfa8;
+}
+
+.editable {
+    background-color: #f2e6d3;
+    cursor: pointer;
+}
+
+.save-button, .add-question-button {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #b5a17e;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+}
+

@@ -1,17 +1,26 @@
+# /scripts/convert_to_html.py
 import pandas as pd
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, '..', 'data')
+STATIC_DIR = os.path.join(BASE_DIR, '..', 'static')
 
 
-def sort_csv(input_file='students_submissions.csv'):
+def sort_csv(input_file=os.path.join(DATA_DIR, 'students_submissions.csv')):
     df = pd.read_csv(input_file, encoding='utf-8-sig')
     df_sorted = df.sort_values(by='Student Name')
     return df_sorted
 
 
-def convert_to_html(input_file='students_submissions.csv', output_file='sorted_submissions.html'):
+def convert_to_html(input_file=os.path.join(DATA_DIR, 'students_submissions.csv'), output_file=os.path.join(DATA_DIR, 'sorted_submissions.html')):
     df = sort_csv(input_file)
 
     # Replace newline characters with <br> for HTML
     df = df.replace({'\n': '<br>'}, regex=True)
+
+    # Fill NaN values with empty strings
+    df = df.fillna('')
 
     # Ensure all entries in the 'Compiled' column are strings
     df['Compiled'] = df['Compiled'].astype(str)
@@ -26,50 +35,11 @@ def convert_to_html(input_file='students_submissions.csv', output_file='sorted_s
     html_table = df.to_html(
         index=False, classes='table table-striped', border=0, escape=False)
 
-    # Define HTML structure with inline CSS
-    html_string = f'''
-    <html>
-    <head>
-    <style>
-    body {{
-        font-family: Arial, sans-serif;
-        background-color: #f8f9fa;
-        margin: 0;
-        padding: 20px;
-    }}
-    h2 {{
-        text-align: center;
-        color: #333;
-    }}
-    .table {{
-        width: 100%;
-        border-collapse: collapse;
-        margin: 20px 0;
-        font-size: 18px;
-        text-align: left;
-    }}
-    .table th, .table td {{
-        padding: 12px 15px;
-        border: 1px solid #dddddd;
-    }}
-    .table th {{
-        background-color: #007bff;
-        color: #ffffff;
-    }}
-    .table tr:nth-child(even) {{
-        background-color: #f2f2f2;
-    }}
-    .table tr:hover {{
-        background-color: #d1e7fd;
-    }}
-    </style>
-    </head>
-    <body>
-    <h2>Student Submissions</h2>
-    {html_table}
-    </body>
-    </html>
-    '''
+    with open(os.path.join(STATIC_DIR, 'index.html'), 'r', encoding='utf-8') as file:
+        html_template = file.read()
+
+    html_string = html_template.replace(
+        '<div id="table-container"></div>', f'<div id="table-container">{html_table}</div>')
 
     # Write the HTML string to the output file
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -78,7 +48,7 @@ def convert_to_html(input_file='students_submissions.csv', output_file='sorted_s
     print(f'HTML table saved to {output_file}')
 
 
-def convert_to_excel(input_file='students_submissions.csv', output_file='sorted_submissions.xlsx'):
+def convert_to_excel(input_file=os.path.join(DATA_DIR, 'students_submissions.csv'), output_file=os.path.join(DATA_DIR, 'sorted_submissions.xlsx')):
     df = sort_csv(input_file)
     df.to_excel(output_file, index=False)
     print(f'Excel file saved to {output_file}')
@@ -87,3 +57,4 @@ def convert_to_excel(input_file='students_submissions.csv', output_file='sorted_
 if __name__ == '__main__':
     convert_to_html()
     convert_to_excel()
+

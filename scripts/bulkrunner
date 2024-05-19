@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Get the directory of the script
+BASE_DIR=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+PROJECT_ROOT="$BASE_DIR/.."
+
+# Ensure the necessary directories exist
+mkdir -p "$PROJECT_ROOT/submissions"
+mkdir -p "$PROJECT_ROOT/data"
+mkdir -p "$PROJECT_ROOT/archives"
+
+# List available archives
+echo "Archives directory contains:"
+archive_files=("$PROJECT_ROOT/archives"/*.zip)
+
+if [ ${#archive_files[@]} -eq 0 ]; then
+    echo "No .zip files found in the archives directory."
+    exit 1
+fi
+
+for i in "${!archive_files[@]}"; do
+    echo "$((i + 1)) - '$(basename "${archive_files[$i]}")'"
+done
+
+# Prompt user to select an archive
+read -p "Select one: " archive_index
+archive_index=$((archive_index - 1))
+
+if [ -z "${archive_files[$archive_index]}" ]; then
+    echo "Invalid selection!"
+    exit 1
+fi
+
+archive_name=$(basename "${archive_files[$archive_index]}")
+echo "You selected: $archive_name"
+
+# Unzip the specified submission into the submissions directory
+echo "Extracting $archive_name..."
+unzip -o "$PROJECT_ROOT/archives/$archive_name" -d "$PROJECT_ROOT/submissions"
+
+# Prompt user for virtual environment setup
+read -p "Do you want to use a virtual environment? (yes/no): " use_venv
+
+if [ "$use_venv" == "yes" ]; then
+    # Check if venv exists, if not, create it
+    if [ ! -d "$PROJECT_ROOT/venv" ]; then
+        echo "Creating virtual environment..."
+        python3 -m venv "$PROJECT_ROOT/venv"
+    fi
+
+    # Activate the virtual environment
+    source "$PROJECT_ROOT/venv/bin/activate"
+
+    # Install required packages
+    echo "Installing requirements..."
+    pip install -r "$PROJECT_ROOT/requirements.txt"
+fi
+
+# Run the process_submissions script
+echo "Processing submissions..."
+PYTHONPATH="$PROJECT_ROOT/scripts" python3 "$PROJECT_ROOT/scripts/process_submissions.py"
+
+
+# Deactivate virtual environment if used
+if [ "$use_venv" == "yes" ]; then
+    deactivate
+fi
+
+printf "\n\n\nDone!"
