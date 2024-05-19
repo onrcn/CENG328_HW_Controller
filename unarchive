@@ -1,0 +1,61 @@
+#!/bin/bash
+
+usage() {
+    echo "Usage: $0 <filename.zip> [optional: <output_directory>] [optional: -v]"
+    echo "-v flag is used to display the contents of the unzipped folder."
+    echo "If you do not specify an output directory, the script will create a folder called submissions"
+    printf "\n"
+    echo "Example: $0 submissions.zip my_submissions -v"
+}
+
+# Check if the file argument is provided
+if [ -z "$1" ]; then
+    usage
+    exit 1
+fi
+
+FILENAME="$1"
+
+# Check if the file exists
+if [ ! -f "$FILENAME" ]; then
+    echo "File '$FILENAME' does not exist."
+    exit 1
+fi
+
+# Set default directory name
+FOLDERNAME="submissions"
+
+# Check if a custom directory is provided
+if [ -n "$2" ]; then
+    if [ "$2" == "-v" ]; then
+        # If -v is provided as the second argument
+        VERBOSE_FLAG="-v"
+    else
+        FOLDERNAME="$2"
+    fi
+fi
+
+# Check if the directory exists, create if not
+if [ ! -d "$FOLDERNAME" ]; then
+    echo "Creating directory: $FOLDERNAME"
+    mkdir -p "$FOLDERNAME"
+fi
+
+# Unzip the file to the specified directory
+if unzip -qq "$FILENAME" -d "$FOLDERNAME"; then
+    echo "Unzip successful."
+    # Check if the -v flag is provided anywhere in the arguments
+    if [[ "$@" =~ "-v" ]]; then
+        if command -v tree &> /dev/null; then
+            echo "Contents of the unzipped folder (using tree):"
+            tree "$FOLDERNAME"
+        else
+            echo "Contents of the unzipped folder (using ls -R):"
+            ls -R "$FOLDERNAME"
+        fi
+    fi
+else
+    echo "Unzip failed."
+    exit 1
+fi
+

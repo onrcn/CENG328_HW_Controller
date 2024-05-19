@@ -1,27 +1,96 @@
 #!/bin/bash
 
-# Create a python virtual environment or activate it if it already exists
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
+display_help() {
+    echo "Usage: $0 <zip-file> [-v]"
+    echo
+    echo "This script is a 'bulkrunner' script for managing student submissions."
+    echo
+    echo "1. Unzips the specified ZIP file into a 'submissions' directory."
+    echo "2. Installs the required Python packages from requirements.txt."
+    echo "3. Executes the Python scripts 'first_control.py' and 'convert_to_html.py'."
+    echo
+    echo "Options:"
+    echo "  -v       Verbose mode. Displays the contents of the 'submissions' directory."
+    echo
+    echo "The user can choose to run the scripts in a virtual environment or not."
+    echo "It is strongly recommended to use a virtual environment."
+    echo "The user will be prompted to provide the path to the virtual environment if"
+    echo "they choose to use one."
+}
+
+# Check if the file argument is provided
+if [ -z "$1" ]; then
+    display_help
+    exit 1
 fi
 
-source venv/bin/activate
+# Check if the file argument is a zip file
+if [[ "$1" != *.zip ]]; then
+    echo "Error: File '$1' is not a zip file."
+    exit 1
+fi
 
-# Install the required packages
-pip install -r requirements.txt
+ZIPFILE="$1"
+FOLDERNAME="submissions"
 
-# Make the "unarchive" script executable if it is not already
-chmod +x unarchive
+# Check if the file exists
+if [ ! -f "$ZIPFILE" ]; then
+    echo "Error: File '$ZIPFILE' does not exist."
+    exit 1
+fi
 
-# Run the "unarchive" script, taking the first argument as the path to the archive
-./unarchive $1
+# Check if the directory exists, create if not
+if [ ! -d "$FOLDERNAME" ]; then
+    echo "Creating directory: $FOLDERNAME"
+    mkdir -p "$FOLDERNAME"
+fi
 
-# Run the python script
+# Unzip the file to the specified directory
+if unzip -qq "$ZIPFILE" -d "$FOLDERNAME"; then
+    echo "Unzip successful."
+    # Check if the -v flag is provided anywhere in the arguments
+    if [[ "$@" =~ "-v" ]]; then
+        if command -v tree &> /dev/null; then
+            echo "Contents of the unzipped folder (using tree):"
+            tree "$FOLDERNAME"
+        else
+            echo "Contents of the unzipped folder (using ls -R):"
+            ls -R "$FOLDERNAME"
+        fi
+    fi
+else
+    echo "Error: Unzip failed."
+    exit 1
+fi
+
+# Prompt the user for virtual environment
+read -p "Do you want to run the scripts in a virtual environment? (yes/no): " use_venv
+
+if [ "$use_venv" = "yes" ]; then
+    read -p "Enter the path to the virtual environment: " venv_path
+    source "$venv_path/bin/activate"
+    echo "Installing requirements in the virtual environment..."
+else
+    echo "Installing requirements in the global environment..."
+fi
+
+# Install the requirements from requirements.txt
+if [ -f requirements.txt ]; then
+    pip install -r requirements.txt
+else
+    echo "Error: requirements.txt file not found."
+    if [ "$use_venv" = "yes" ]; then
+        deactivate
+    fi
+    exit 1
+fi
+
+# Run the Python scripts
 python3 first_control.py
 
-#
+if [ "$use_venv" = "yes" ]; then
+    deactivate
+fi
 
-
-
-
+echo "Scripts executed successfully."
 

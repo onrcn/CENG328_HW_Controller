@@ -2,6 +2,7 @@ import os
 import csv
 import shutil
 import subprocess
+import magic
 from convert_to_html import convert_to_html
 
 def csv_create(base_dir="submissions/", csv_file="students_submissions.csv"):
@@ -27,9 +28,9 @@ def csv_create(base_dir="submissions/", csv_file="students_submissions.csv"):
 
 def determine_file_type(file_path):
     try:
-        result = subprocess.run(
-            ['file', '--mime-type', '-b', file_path], capture_output=True, text=True, check=True)
-        return result.stdout.strip()
+        mime = magic.Magic(mime=True)
+        file_type = mime.from_file(file_path)
+        return file_type
     except subprocess.CalledProcessError as e:
         print(f"Error determining file type: {e}")
         return ""
@@ -37,11 +38,13 @@ def determine_file_type(file_path):
 def extract_archive(file_path, destination_dir):
     file_type = determine_file_type(file_path)
     try:
-        if file_type == "application/zip":
+        if file_type == "application/zip" or file_path.endswith('.zip'):
             shutil.unpack_archive(file_path, destination_dir)
-        elif "rar" in file_type:
+        elif "rar" in file_type or file_path.endswith('.rar'):
             os.makedirs(destination_dir, exist_ok=True)
             subprocess.run(['unrar', 'x', '-o+', '-y', file_path, destination_dir], check=True)
+        elif file_type in ['application/x-tar', 'application/gzip', 'application/x-xz', 'application/x-bzip2'] or file_path.endswith(('.tar.gz', '.tgz', '.tar.xz', '.txz', '.tar.bz2', '.tbz2', '.tar')):
+            shutil.unpack_archive(file_path, destination_dir)
         else:
             raise ValueError(f"Unsupported archive type for file {file_path}")
     except Exception as e:
@@ -69,23 +72,25 @@ def clean_up_folder(folder_path):
                     print(f"Error deleting file {file_path}: {e}")
     return deleted_files_log, changed_files_log
 
+
 def compile_check(source_files, student_folder):
     compile_results = {}
     compile_logs = {}
     for file in source_files:
         file_path = os.path.join(student_folder, file)
-        compile_command = f"gcc \"{file_path}\" -o \"{file_path}.out\""
-        try:
-            result = subprocess.run(compile_command, shell=True, capture_output=True, text=True)
-            if result.returncode == 0:
-                compile_results[file] = True
-                compile_logs[file] = "Compiled successfully."
-            else:
+        if os.path.isfile(file_path):  # Ensure it's a file
+            compile_command = f"gcc \"{file_path}\" -o \"{file_path}.out\""
+            try:
+                result = subprocess.run(compile_command, shell=True, capture_output=True, text=True)
+                if result.returncode == 0:
+                    compile_results[file] = True
+                    compile_logs[file] = "Compiled successfully."
+                else:
+                    compile_results[file] = False
+                    compile_logs[file] = result.stderr
+            except Exception as e:
                 compile_results[file] = False
-                compile_logs[file] = result.stderr
-        except Exception as e:
-            compile_results[file] = False
-            compile_logs[file] = str(e)
+                compile_logs[file] = str(e)
     return compile_results, compile_logs
 
 def ensure_input_txt(student_folder, root_input_txt):
@@ -156,4 +161,3 @@ def first_control():
 
 if __name__ == "__main__":
     first_control()
-
