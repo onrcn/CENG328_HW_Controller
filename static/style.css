@@ -1,7 +1,7 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4ecd8;
-    color: #5b4636;
+    background-color: #f4ecd8; /* Sepia background color */
+    color: #5b4636; /* Sepia text color */
     margin: 0;
     padding: 20px;
 }
@@ -61,3 +61,24 @@ h2 {
     cursor: pointer;
     font-size: 16px;
 }
+
+.expandable {
+    max-height: 50px;
+    overflow: hidden;
+    position: relative;
+}
+
+.expandable .expand-btn {
+    display: block;
+    background-color: #b5a17e;
+    color: white;
+    text-align: center;
+    padding: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+.expandable.expanded {
+    max-height: none;
+}
+

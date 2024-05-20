@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             const cells = row.split(',');
             cells.forEach((cell, cellIndex) => {
                 const cellElement = rowIndex === 0 ? document.createElement('th') : document.createElement('td');
-                cellElement.textContent = cell;
+                cellElement.innerHTML = formatCellContent(cell);
                 if (rowIndex !== 0) {
                     cellElement.addEventListener('click', () => {
                         if (!cellElement.classList.contains('editable')) {
@@ -41,12 +41,35 @@ document.addEventListener('DOMContentLoaded', (event) => {
         return table;
     };
 
+    const formatCellContent = (content) => {
+        if (content.length > 100) {
+            const truncated = content.slice(0, 100);
+            return `
+                <div class="expandable">
+                    <span class="truncated">${truncated}...</span>
+                    <span class="full-content">${content}</span>
+                    <span class="expand-btn">Read more</span>
+                </div>
+            `;
+        }
+        return content;
+    };
+
     const tableContainer = document.getElementById('table-container');
     fetch('data/students_submissions.csv')
         .then(response => response.text())
         .then(csvString => {
             const table = createTableFromCSV(csvString);
             tableContainer.appendChild(table);
+
+            // Add event listeners for expand/collapse functionality
+            document.querySelectorAll('.expandable .expand-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const expandable = btn.parentElement;
+                    expandable.classList.toggle('expanded');
+                    btn.textContent = expandable.classList.contains('expanded') ? 'Read less' : 'Read more';
+                });
+            });
         });
 
     document.getElementById('saveButton').addEventListener('click', () => {

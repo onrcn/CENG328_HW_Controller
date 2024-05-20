@@ -205,7 +205,7 @@ def update_csv_with_errors(base_dir=SUBMISSIONS_DIR, csv_file=os.path.join(DATA_
                 if source_files:
                     compile_results, compile_logs, error_logs = compile_check(
                         source_files)
-                    row[3] = ", ".join(
+                    row[3] = "\n".join(
                         [f"{k}: {v}" for k, v in compile_results.items()])
                     row[4] = "\n".join(
                         [f"{k}: {v}" for k, v in compile_logs.items()])
@@ -231,5 +231,4 @@ def first_control(check_input_txt=True):
 
 
 if __name__ == "__main__":
-    first_control(check_input_txt=True)
-
+    first_control(check_input_txt=False)
